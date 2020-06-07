@@ -1,2 +1,1 @@
-# Virtural_TryOn
-Insight Project
+# Virtual_Try_on
