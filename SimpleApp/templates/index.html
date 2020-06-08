@@ -7,14 +7,14 @@
         <meta name="author" content="" />
         <title>Freelancer - Start Bootstrap Theme</title>
         <!-- Favicon-->
-        <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico" />
+        <link rel="icon" type="image/x-icon" href="static/assets/img/favicon.ico" />
         <!-- Font Awesome icons (free version)-->
         <script src="https://use.fontawesome.com/releases/v5.13.0/js/all.js" crossorigin="anonymous"></script>
         <!-- Google fonts-->
         <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css" />
         <link href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic" rel="stylesheet" type="text/css" />
         <!-- Core theme CSS (includes Bootstrap)-->
-        <link href="css/styles.css" rel="stylesheet" />
+        <link href="static/css/styles.css" rel="stylesheet" />
     </head>
     <body id="page-top">
         <!-- Navigation-->
@@ -33,7 +33,7 @@
         <!-- Masthead-->
         <header class="masthead bg-primary text-white text-center">
             <div class="container d-flex align-items-center flex-column">
-                <!-- Masthead Avatar Image--><img class="masthead-avatar mb-5" src="assets/img/avataaars.svg" alt="" /><!-- Masthead Heading-->
+                <!-- Masthead Avatar Image--><img class="masthead-avatar mb-5" src="static/assets/img/avataaars.svg" alt="" /><!-- Masthead Heading-->
                 <h1 class="masthead-heading text-uppercase mb-0">Start Bootstrap</h1>
                 <!-- Icon Divider-->
                 <div class="divider-custom divider-light">
@@ -45,6 +45,54 @@
                 <p class="masthead-subheading font-weight-light mb-0">Graphic Artist - Web Designer - Illustrator</p>
             </div>
         </header>
+
+
+        <!-- Try Section -->
+        <section class="bg-primary mb-0" id="try">
+        <div class="container">
+            <h2 class="text-center text-white">Try My App!</h2>
+            <hr class="star-light mb-5">
+                <div class="col-sm m-3 text-center">
+                        <form action="/output" method="GET" id="user_input">
+                            <input class="form-control" type="text" id="user_input" name='user_input' placeholder="e.g. blablabla">
+                        </form>
+                </div>
+        <div class="row justify-content-center">
+                <button type="submit" class="btn btn-secondary btn-lg" form="user_input">Go!</button>
+        </div>
+
+        {% if my_form_result=='Empty' %}
+        <div class="row mt-4 justify-content-center">
+                <h4 class="text-danger text-center text-uppercase">You did not type anything!</h4>
+        </div>
+
+        {% elif my_form_result=='NotEmpty' %}
+
+        <div class="row mt-4 justify-content-center">
+                <h4 class="text-light text-center text-uppercase">We found something!</h4>
+        </div>
+        <div class="row p-1 m-1 justify-content-center">
+                <div class="col-md- w-50 list-group">
+                    <ul class="list-group">
+                    <h4 class="text-center">
+                    <li class="list-group-item d-flex justify-content-between align-items-center active">
+                                <b>{{my_input}}</b>
+
+                                <span class="badge badge-primary badge-pill">{{my_number}} followers</span>
+                            </li>
+                            </h4>
+                    </ul>
+                </div>
+                <div class="col">
+                <img src="{{ url_for('static', filename = my_img_name) }}" width=500 height=416>
+                </div>
+        </div>
+
+        {% else %}
+        {% endif %}
+        </div>
+        </section>
+
         <!-- Portfolio Section-->
         <section class="page-section portfolio" id="portfolio">
             <div class="container">
@@ -64,7 +112,7 @@
                             <div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100">
                                 <div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div>
                             </div>
-                            <img class="img-fluid" src="assets/img/portfolio/cabin.png" alt="" />
+                            <img class="img-fluid" src="static/assets/img/portfolio/cabin.png" alt="" />
                         </div>
                     </div>
                     <!-- Portfolio Item 2-->
@@ -73,7 +121,7 @@
                             <div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100">
                                 <div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div>
                             </div>
-                            <img class="img-fluid" src="assets/img/portfolio/cake.png" alt="" />
+                            <img class="img-fluid" src="static/assets/img/portfolio/cake.png" alt="" />
                         </div>
                     </div>
                     <!-- Portfolio Item 3-->
@@ -82,7 +130,7 @@
                             <div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100">
                                 <div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div>
                             </div>
-                            <img class="img-fluid" src="assets/img/portfolio/circus.png" alt="" />
+                            <img class="img-fluid" src="static/assets/img/portfolio/circus.png" alt="" />
                         </div>
                     </div>
                     <!-- Portfolio Item 4-->
@@ -91,7 +139,7 @@
                             <div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100">
                                 <div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div>
                             </div>
-                            <img class="img-fluid" src="assets/img/portfolio/game.png" alt="" />
+                            <img class="img-fluid" src="static/assets/img/portfolio/game.png" alt="" />
                         </div>
                     </div>
                     <!-- Portfolio Item 5-->
@@ -100,7 +148,7 @@
                             <div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100">
                                 <div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div>
                             </div>
-                            <img class="img-fluid" src="assets/img/portfolio/safe.png" alt="" />
+                            <img class="img-fluid" src="static/assets/img/portfolio/safe.png" alt="" />
                         </div>
                     </div>
                     <!-- Portfolio Item 6-->
@@ -109,7 +157,7 @@
                             <div class="portfolio-item-caption d-flex align-items-center justify-content-center h-100 w-100">
                                 <div class="portfolio-item-caption-content text-center text-white"><i class="fas fa-plus fa-3x"></i></div>
                             </div>
-                            <img class="img-fluid" src="assets/img/portfolio/submarine.png" alt="" />
+                            <img class="img-fluid" src="static/assets/img/portfolio/submarine.png" alt="" />
                         </div>
                     </div>
                 </div>
@@ -234,7 +282,7 @@
                                         <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
                                         <div class="divider-custom-line"></div>
                                     </div>
-                                    <!-- Portfolio Modal - Image--><img class="img-fluid rounded mb-5" src="assets/img/portfolio/cabin.png" alt="" /><!-- Portfolio Modal - Text-->
+                                    <!-- Portfolio Modal - Image--><img class="img-fluid rounded mb-5" src="static/assets/img/portfolio/cabin.png" alt="" /><!-- Portfolio Modal - Text-->
                                     <p class="mb-5">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Mollitia neque assumenda ipsam nihil, molestias magnam, recusandae quos quis inventore quisquam velit asperiores, vitae? Reprehenderit soluta, eos quod consequuntur itaque. Nam.</p>
                                     <button class="btn btn-primary" data-dismiss="modal"><i class="fas fa-times fa-fw"></i>Close Window</button>
                                 </div>
@@ -263,7 +311,7 @@
                                         <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
                                         <div class="divider-custom-line"></div>
                                     </div>
-                                    <!-- Portfolio Modal - Image--><img class="img-fluid rounded mb-5" src="assets/img/portfolio/cake.png" alt="" /><!-- Portfolio Modal - Text-->
+                                    <!-- Portfolio Modal - Image--><img class="img-fluid rounded mb-5" src="static/assets/img/portfolio/cake.png" alt="" /><!-- Portfolio Modal - Text-->
                                     <p class="mb-5">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Mollitia neque assumenda ipsam nihil, molestias magnam, recusandae quos quis inventore quisquam velit asperiores, vitae? Reprehenderit soluta, eos quod consequuntur itaque. Nam.</p>
                                     <button class="btn btn-primary" data-dismiss="modal"><i class="fas fa-times fa-fw"></i>Close Window</button>
                                 </div>
@@ -292,7 +340,7 @@
                                         <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
                                         <div class="divider-custom-line"></div>
                                     </div>
-                                    <!-- Portfolio Modal - Image--><img class="img-fluid rounded mb-5" src="assets/img/portfolio/circus.png" alt="" /><!-- Portfolio Modal - Text-->
+                                    <!-- Portfolio Modal - Image--><img class="img-fluid rounded mb-5" src="static/assets/img/portfolio/circus.png" alt="" /><!-- Portfolio Modal - Text-->
                                     <p class="mb-5">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Mollitia neque assumenda ipsam nihil, molestias magnam, recusandae quos quis inventore quisquam velit asperiores, vitae? Reprehenderit soluta, eos quod consequuntur itaque. Nam.</p>
                                     <button class="btn btn-primary" data-dismiss="modal"><i class="fas fa-times fa-fw"></i>Close Window</button>
                                 </div>
@@ -321,7 +369,7 @@
                                         <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
                                         <div class="divider-custom-line"></div>
                                     </div>
-                                    <!-- Portfolio Modal - Image--><img class="img-fluid rounded mb-5" src="assets/img/portfolio/game.png" alt="" /><!-- Portfolio Modal - Text-->
+                                    <!-- Portfolio Modal - Image--><img class="img-fluid rounded mb-5" src="static/assets/img/portfolio/game.png" alt="" /><!-- Portfolio Modal - Text-->
                                     <p class="mb-5">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Mollitia neque assumenda ipsam nihil, molestias magnam, recusandae quos quis inventore quisquam velit asperiores, vitae? Reprehenderit soluta, eos quod consequuntur itaque. Nam.</p>
                                     <button class="btn btn-primary" data-dismiss="modal"><i class="fas fa-times fa-fw"></i>Close Window</button>
                                 </div>
@@ -350,7 +398,7 @@
                                         <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
                                         <div class="divider-custom-line"></div>
                                     </div>
-                                    <!-- Portfolio Modal - Image--><img class="img-fluid rounded mb-5" src="assets/img/portfolio/safe.png" alt="" /><!-- Portfolio Modal - Text-->
+                                    <!-- Portfolio Modal - Image--><img class="img-fluid rounded mb-5" src="static/assets/img/portfolio/safe.png" alt="" /><!-- Portfolio Modal - Text-->
                                     <p class="mb-5">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Mollitia neque assumenda ipsam nihil, molestias magnam, recusandae quos quis inventore quisquam velit asperiores, vitae? Reprehenderit soluta, eos quod consequuntur itaque. Nam.</p>
                                     <button class="btn btn-primary" data-dismiss="modal"><i class="fas fa-times fa-fw"></i>Close Window</button>
                                 </div>
@@ -379,7 +427,7 @@
                                         <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
                                         <div class="divider-custom-line"></div>
                                     </div>
-                                    <!-- Portfolio Modal - Image--><img class="img-fluid rounded mb-5" src="assets/img/portfolio/submarine.png" alt="" /><!-- Portfolio Modal - Text-->
+                                    <!-- Portfolio Modal - Image--><img class="img-fluid rounded mb-5" src="static/assets/img/portfolio/submarine.png" alt="" /><!-- Portfolio Modal - Text-->
                                     <p class="mb-5">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Mollitia neque assumenda ipsam nihil, molestias magnam, recusandae quos quis inventore quisquam velit asperiores, vitae? Reprehenderit soluta, eos quod consequuntur itaque. Nam.</p>
                                     <button class="btn btn-primary" data-dismiss="modal"><i class="fas fa-times fa-fw"></i>Close Window</button>
                                 </div>
@@ -395,9 +443,9 @@
         <!-- Third party plugin JS-->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
         <!-- Contact form JS-->
-        <script src="assets/mail/jqBootstrapValidation.js"></script>
-        <script src="assets/mail/contact_me.js"></script>
+        <script src="static/assets/mail/jqBootstrapValidation.js"></script>
+        <script src="static/assets/mail/contact_me.js"></script>
         <!-- Core theme JS-->
-        <script src="js/scripts.js"></script>
+        <script src="static/js/scripts.js"></script>
     </body>
 </html>
