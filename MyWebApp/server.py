@@ -1,7 +1,8 @@
 #some_file.py
 import sys
 # insert at 1, 0 is the script path (or '' in REPL)
-sys.path.append('~/322GDrive/Insight_Project/My_Project/Virtual_TryOn')
+#sys.path.append('~/322GDrive/Insight_Project/My_Project/Virtual_TryOn')
+sys.path.append('~/Insight_Project/Virtual_TryOn')
 from MyWebApp.static.scripts.utils import random_person, random_cloth
 
 from flask import Flask, render_template, request, send_from_directory
