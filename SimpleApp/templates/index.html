@@ -51,6 +51,23 @@
         <section class="bg-primary mb-0" id="try">
         <div class="container">
             <h2 class="text-center text-white">Try My App!</h2>
+
+        <form action="/upload" method="POST" id="entry_form" class="entry-form" role="form">
+            <div class="entry">
+                ...
+                <input type="file" class="file-upload" name="files0">
+                ...
+            </div>
+            <div class="entry">
+                ...
+                <input type="file" class="file-upload" name="files1">
+                ...
+            </div>
+        </form>
+
+        <button type="submit" class="btn btn-secondary btn-lg" form="entry_form">Go!</button>
+
+
             <hr class="star-light mb-5">
                 <div class="col-sm m-3 text-center">
                         <form action="/output" method="GET" id="user_input">

@@ -41,25 +41,38 @@
         <header class="masthead">
             <div class="container d-flex h-100 align-items-center">
                 <div class="mx-auto text-center">
-                    <h1 class="text-uppercase">NextPick</h1>
-                    <h2 class="text-white mx-auto mt-2 mb-5">Pick your next travel locations by uploading a scenery picture.</h2>
+                    <h1 class="text-uppercase">Virtural TryOn</h1>
+<!--                    <h2 class="text-white mx-auto mt-2 mb-5">Pick your next travel locations by uploading a scenery picture.</h2>-->
 
-                    <br><h2 class="text-white-50 mx-auto mt-2 mb-5">Choose from one of the following images</h2>
-                    <form action="/output" id="selection">
-                        <select class="image-picker" show-html name="selection">
-                            <option data-img-src="../static/assets/img/ski-test-img.jpg" class="ipicker" value="ski"></option>
-                            <option data-img-src="../static/assets/img/banff_s.jpg" class="ipicker" value="banff"></option>
-                            <option data-img-src="../static/assets/img/test-img-war-mem.jpg" class="ipicker" value="war_mem"></option>
-                        </select>
-                        <script>
-                            $("select").imagepicker()
-                            $("select").data("picker").selected_values()
-                        </script>
-                        <input class="form-control" type="text" id="input_location" name="input_location" value="Toronto, Canada"/>
-                        <div>
-                            <button type="submit" class="btn btn-secondary btn-lg text-white" form="selection">Go</button>
-                        </div>
-                    </form>
+                    <br><h2 class="text-white-50 mx-auto mt-2 mb-5">Choose a random person and a random cloth below</h2>
+
+
+         <div class="row">
+          <div class="column">
+              <form action = "/random_person" method = "POST">
+                  <div class="container">
+                      <img src="../static/database/person/{{person_name}}" alt="person" style="width:100%">
+                      <button type="submit", formaction = '/random_person'>Random Person</button>
+                  </div>
+              </form>
+
+          </div>
+          <div class="column">
+              <form action = "/random_cloth" method = "POST">
+                  <div class="container">
+                      <img src="../static/database/cloth/{{cloth_name}}" alt="cloth" style="width:100%">
+                      <button type="submit", formaction = '/random_cloth'>Random Cloth</button>
+                  </div>
+              </form>
+          </div>
+          <div class="column">
+              <form action = "/output" method = "GET">
+              <div class="container">
+                  <img src="../static/database/result/{{result_name}}" alt="output" style="width:100%">
+                  <button type="submit", formaction = '/output'>Try On!</button>
+              </div>
+          </div>
+        </div>
                     <!--<br><h2 class="text-white mx-auto mt-2 mb-5">Or upload your own image!</h2>
                     <form class="myform.cgi">
                         <label for="upload"> Select an image file to upload</label>
@@ -90,7 +103,7 @@
                                 <i class="fas fa-envelope text-primary mb-2"></i>
                                 <h4 class="text-uppercase text-white m-0">Email</h4>
                                 <hr class="my-4" />
-                                <div class="small text-white-50"><a href="#!">chungisaac1217@gmail.com</a></div>
+                                <div class="small text-white-50"><a href="#!">qingyun322@gmail.com</a></div>
                             </div>
                         </div>
                     </div>
@@ -100,7 +113,7 @@
                                 <i class="fas fa-mobile-alt text-primary mb-2"></i>
                                 <h4 class="text-uppercase text-white m-0">Phone</h4>
                                 <hr class="my-4" />
-                                <div class="small text-white-50">+1 (416) 824-6422</div>
+                                <div class="small text-white-50">+1 </div>
                             </div>
                         </div>
                     </div>

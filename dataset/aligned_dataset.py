@@ -1,4 +1,5 @@
 import os.path
+import torch.utils.data as data
 from dataset.base_dataset import BaseDataset, get_params, get_transform, normalize
 from dataset.image_folder import make_dataset, make_dataset_test
 from PIL import Image
@@ -111,7 +112,7 @@ class AlignedDataset(BaseDataset):
                         self.diction[name].append(d)
 
 
-    def __getitem__(self, index):        
+    def __getitem__(self, index):
         train_mask=9600
         ### input A (label maps)
         box=[]
@@ -129,16 +130,16 @@ class AlignedDataset(BaseDataset):
         A = Image.open(A_path).convert('L')
         AR = Image.open(AR_path).convert('L')
 
-
-  
         params = get_params(self.opt, A.size)
         if self.opt.label_nc == 0:
             transform_A = get_transform(self.opt, params)
             A_tensor = transform_A(A.convert('RGB'))
+            print(A.size())
             AR_tensor = transform_A(AR.convert('RGB'))
         else:
             transform_A = get_transform(self.opt, params, method=Image.NEAREST, normalize=False)
             A_tensor = transform_A(A) * 255.0
+            print(A_tensor.size())
 
             AR_tensor = transform_A(AR) * 255.0
         B_tensor = inst_tensor = feat_tensor = 0
@@ -220,3 +221,122 @@ class AlignedDataset(BaseDataset):
 
     def name(self):
         return 'AlignedDataset'
+
+
+class my_Dataset(data.Dataset):
+    def __init__(self, opt, person_path, cloth_path):
+        super(my_Dataset, self).__init__()
+        self.opt = opt
+        self.person_path = person_path
+        self.cloth_path = cloth_path
+        self.parser_path = person_path.replace('.jpg', '.png').replace('person', 'person_parser')
+        self.pose_path = person_path.replace('.jpg', '_keypoints.json').replace('person', 'person_pose')
+        self.cloth_mask_path = cloth_path.replace('cloth', 'cloth_mask')
+
+
+    #
+    # train_mask = 9600
+    # ### input A (label maps)
+    # box = []
+    # # for k,x in enumerate(self.A_paths):
+    # #     if '000386' in x :
+    # #         index=k
+    # #         break
+    # test = np.random.randint(len(self.A_paths))
+    # # for k, s in enumerate(self.B_paths):
+    # #    if '006581' in s:
+    # #        sample = k
+    # #        break
+    # A_path = self.A_paths[index]
+    # AR_path = self.AR_paths[index]
+
+
+
+    # A = Image.open(A_path).convert('L')
+    # AR = Image.open(AR_path).convert('L')
+
+
+
+    def __getitem__(self, index):
+        person_path = self.person_path
+        cloth_path = self. cloth_path
+        parser_path = self.parser_path
+        pose_path = self.pose_path
+        cloth_mask_path  = self.cloth_mask_path
+        opt = self.opt
+
+        parser = Image.open(parser_path).convert('L')
+        params = get_params(opt, parser.size)
+        if opt.label_nc == 0:
+            transform_A = get_transform(opt, params)
+            parser_tensor = transform_A(parser.convert('RGB'))
+        else:
+            transform_A = get_transform(opt, params, method=Image.NEAREST, normalize=False)
+            parser_tensor = transform_A(parser) * 255.0
+
+        # B_tensor = inst_tensor = feat_tensor = 0
+        ### input B (real images)
+
+        person = Image.open(person_path).convert('RGB')
+        transform_B = get_transform(opt, params)
+        person_tensor = transform_B(person)
+
+        # ### input M (masks)
+        # M_path = B_path  # self.M_paths[np.random.randint(1)]
+        # MR_path = B_path  # self.MR_paths[np.random.randint(1)]
+        # M = Image.open(M_path).convert('L')
+        # MR = Image.open(MR_path).convert('L')
+        # M_tensor = transform_A(MR)
+
+        # ### input_MC (colorMasks)
+        # MC_path = B_path  # self.MC_paths[1]
+        # MCR_path = B_path  # self.MCR_paths[1]
+        # MCR = Image.open(MCR_path).convert('L')
+        # MC_tensor = transform_A(MCR)
+
+        ### input_C (color)
+        # print(self.C_paths)
+        cloth = Image.open(cloth_path).convert('RGB')
+        cloth_tensor = transform_B(cloth)
+
+        ##Edge
+        # E_path = self.E_paths[test]
+        # print(E_path)
+        cloth_mask = Image.open(cloth_mask_path).convert('L')
+        cloth_mask_tensor = transform_A(cloth_mask)
+
+        ##Pose
+        with open(osp.join(pose_path), 'r') as f:
+            pose_label = json.load(f)
+            pose_data = pose_label['people'][0]['pose_keypoints']
+            pose_data = np.array(pose_data)
+            pose_data = pose_data.reshape((-1, 3))
+
+        fine_height = 256
+        fine_width = 192
+        r = 5
+
+        point_num = pose_data.shape[0]
+        pose_map = torch.zeros(point_num, fine_height, fine_width)
+        im_pose = Image.new('L', (fine_width, fine_height))
+        pose_draw = ImageDraw.Draw(im_pose)
+        for i in range(point_num):
+            one_map = Image.new('L', (fine_width, fine_height))
+            draw = ImageDraw.Draw(one_map)
+            pointx = pose_data[i, 0]
+            pointy = pose_data[i, 1]
+            if pointx > 1 and pointy > 1:
+                draw.rectangle((pointx - r, pointy - r, pointx + r, pointy + r), 'white', 'white')
+                pose_draw.rectangle((pointx - r, pointy - r, pointx + r, pointy + r), 'white', 'white')
+            one_map = transform_B(one_map.convert('RGB'))
+            pose_map[i] = one_map[0]
+        pose_tensor = pose_map
+
+        name = person_path.split('/')[-1]
+        input_dict = {'parser': parser_tensor, 'label_ref': parser_tensor, 'person': person_tensor, 'cloth_mask': cloth_mask_tensor,
+                          'cloth': cloth_tensor, 'image_ref': person_tensor, 'path': parser_path, 'path_ref': parser_path,
+                          'pose': pose_tensor, 'name': name}
+        return input_dict
+
+    def __len__(self):
+        return 1
