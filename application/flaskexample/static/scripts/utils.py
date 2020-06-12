@@ -1,6 +1,7 @@
 from random import randint
 import os
 def random_person(config):
+    print(os.getcwd())
     person_names = os.listdir(config['person_folder'])
     idx = randint(0, len(person_names) - 1)
     person_name = person_names[idx]

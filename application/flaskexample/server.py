@@ -1,9 +1,8 @@
-#some_file.py
 import sys
 # insert at 1, 0 is the script path (or '' in REPL)
-sys.path.append('~/322GDrive/Insight_Project/My_Project/Virtural_TryOn')
-#sys.path.append('~/Insight_Project/Virtual_TryOn')
-from MyWebApp.static.scripts.utils import random_person, random_cloth
+#sys.path.append('~/322GDrive/Insight_Project/My_Project/Virtural_TryOn')
+sys.path.append('/home/ubuntu/Insight_Project/Virtural_TryOn')
+from application.flaskexample.static.scripts.utils import random_person, random_cloth
 
 from flask import render_template, request, send_from_directory
 import os
@@ -23,16 +22,19 @@ import cv2
 
 
 config = {'database': 'flaskexample/static/database',
-		  'person_url': "flaskexample/static/database/person/000001_0.jpg",
-		  'person_folder':'flaskexample/static/database/person',
-		  'cloth_folder':'flaskexample/static/database/cloth',
-		  'result_folder':'flaskexample/static/database/result',
-		  'title':"Virtual TryOn - by Qingyun Wang",
-		  'person_name':"",
-		  'cloth_name':"",
-		  'result_name':""}
+          'person_url': "flaskexample/static/database/person/000001_0.jpg",
+	  #'person_folder':'/home/ubuntu/Insight_Project/Virtural_TryOn/application/flaskexample/static/database/person',
+          	  'person_folder':'application/flaskexample/static/database/person',
+	  'cloth_folder':'application/flaskexample/static/database/cloth',
+	  'result_folder':'application/flaskexample/static/database/result',
+	  'title':"Virtual TryOn - by Qingyun Wang",
+	  'person_name':"",
+	  'cloth_name':"",
+	  'result_name':""
+         }
+
 opt = TestOptions().parse()
-opt.checkpoints_dir = '../checkpoints'
+opt.checkpoints_dir = './checkpoints'
 model = create_model(opt)
 
 # config['person_name'] = random_person(config)
@@ -207,5 +209,5 @@ def get_result():
 
 
 # start the server with the 'run()' method
-if __name__ == "__main__":
-	app.run(debug=True) #will run locally http://127.0.0.1:5000/
+#if __name__ == "__main__":
+#	app.run(debug=True) #will run locally http://127.0.0.1:5000/
