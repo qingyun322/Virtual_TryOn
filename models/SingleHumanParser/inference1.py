@@ -1,5 +1,9 @@
 #!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
+import sys
+import os
+# print(os.listdir())
+# sys.path.append('/models/SingleHumanParser')
 import os
 import argparse
 import logging
@@ -11,6 +15,7 @@ import torch
 import torch.nn as nn
 from torchvision import transforms
 
+#from net.pspnet import PSPNet
 from net.pspnet import PSPNet
 import cv2 as cv
 models = {
@@ -24,12 +29,18 @@ models = {
 }
 
 parser = argparse.ArgumentParser(description="Pyramid Scene Parsing Network")
-parser.add_argument('image_path', type=str, help='Path to image')
+parser.add_argument('--image_path', type=str, default='', help='Path to image')
 parser.add_argument('--models-path', type=str, default='./checkpoints', help='Path for storing model snapshots')
 parser.add_argument('--backend', type=str, default='densenet', help='Feature extractor')
 parser.add_argument('--num-classes', type=int, default=20, help="Number of classes.")
 args = parser.parse_args()
-
+args.models_path = './models/SingleHumanParser/checkpoints'
+# image_folder = '/Users/qingyunw/Downloads/Origin_Data/train'
+#
+# image_names = sorted(os.listdir(image_folder))
+# image_path = os.path.join(image_folder, image_names[1])
+# parser.image_path = image_path
+# img = Image.open(image_path)
 
 def build_network(snapshot, backend):
     epoch = 0
@@ -57,7 +68,7 @@ def get_transform():
     return transforms.Compose(transform_image_list)
 
 
-def show_image(img, pred):
+def show_image(img, pred, name):
     fig, axes = plt.subplots(1, 2)
     ax0, ax1 = axes
     ax0.get_xaxis().set_ticks([])
@@ -104,8 +115,8 @@ def show_image(img, pred):
     for j, lab in enumerate(classes):
         cbar.ax.text(2.3, (j + 0.45) / 20.0, lab, ha='left', va='center', )
 
-    plt.savefig(fname="./result.jpg")
-    print('result saved to ./result.jpg')
+    plt.savefig(fname="./"  + name)
+    print('result saved to ...')
     plt.show()
 
 def class_change(n):
@@ -128,18 +139,18 @@ def class_change(n):
         # 13 -> Right_arm
     table = {
       0:0,
-      1:0,
+      1:1,
       2:1,
       3:0,
       4:12,
       5:4,
-      6:3,
-      7:2,
+      6:4,
+      7:4,
       8:0,
       9:8,
-      10:0,
-      11:0,
-      12:0,
+      10:4,
+      11:4,
+      12:4,
       13:12,
       14:11,
       15:13,
@@ -158,7 +169,8 @@ def main():
 
     # ------------ load image ------------ #
     data_transform = get_transform()
-    img = Image.open(args.image_path)
+    img = Image.open(image_path)
+    #img = Image.open(open(args.image_path, 'rb'))
     img = data_transform(img)
     if torch.cuda.is_available():
         img = img.cuda()
@@ -176,9 +188,10 @@ def main():
         # status = cv.imwrite('/content/gdrive/My Drive/Insight_Project/DeepFashion_Try_On/Data_preprocessing/test_label/0000_0.png',pred_change)
         status = cv.imwrite('./sample/0000_1.png',pred_change)
 
-        show_image(img, pred)
+        show_image(img, pred, '0_')
+        show_image(img, pred_change, '1_')
 
-def get_parser(img):
+def get_parser(img, name):
     # --------------- load model --------------- #
     snapshot = os.path.join(args.models_path, args.backend, 'PSPNet_last')
     net, starting_epoch = build_network(snapshot, args.backend)
@@ -202,9 +215,25 @@ def get_parser(img):
         pred_change = vfunc(pred)
         # status = cv.imwrite('/content/gdrive/My Drive/Insight_Project/DeepFashion_Try_On/Data_preprocessing/test_label/0000_0.png',pred_change)
         status = cv.imwrite('./sample/0000_1.png',pred_change)
-
-        show_image(img, pred)
-    return pred_change
+        #
+        # colormap = [(0, 0, 0),
+        #             (1, 0.25, 0), (0, 0.25, 0), (0.5, 0, 0.25), (1, 1, 1),
+        #             (1, 0.75, 0), (0, 0, 0.5), (0.5, 0.25, 0), (0.75, 0, 0.25),
+        #             (1, 0, 0.25), (0, 0.5, 0), (0.5, 0.5, 0), (0.25, 0, 0.5),
+        #             (1, 0, 0.75), (0, 0.5, 0.5), (0.25, 0.5, 0.5), (1, 0, 0),
+        #             (1, 0.25, 0), (0, 0.75, 0), (0.5, 0.75, 0), ]
+        # cmap = matplotlib.colors.ListedColormap(colormap)
+        # bounds = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+        # norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
+        # h, w, _ = pred_change.shape
+        #
+        # pred_change = pred_change.reshape((h, w))
+        #
+        # # show image
+        # plt.imshow(pred_change, cmap=cmap, norm=norm)
+        # plt.savefig(fname="./" + name)
+        # print('result saved to ...')
+    return Image.open('./sample/0000_1.png')
 
 
 if __name__ == '__main__':

@@ -139,8 +139,6 @@ class AlignedDataset(BaseDataset):
         else:
             transform_A = get_transform(self.opt, params, method=Image.NEAREST, normalize=False)
             A_tensor = transform_A(A) * 255.0
-            print(A_tensor.size())
-
             AR_tensor = transform_A(AR) * 255.0
         B_tensor = inst_tensor = feat_tensor = 0
         ### input B (real images)
@@ -184,7 +182,7 @@ class AlignedDataset(BaseDataset):
 
 
         ##Pose
-        pose_name =B_path.replace('.jpg', '_keypoints.json').replace('test_img','test_pose')
+        pose_name =B_path.replace('.jpg', '_keypoints.json').replace('_img','_pose')
         with open(osp.join(pose_name), 'r') as f:
             pose_label = json.load(f)
             pose_data = pose_label['people'][0]['pose_keypoints']
