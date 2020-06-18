@@ -8,6 +8,8 @@ import json
 import numpy as np
 import os.path as osp
 from PIL import ImageDraw
+from models.SingleHumanParser.inference1 import get_parser
+import cv2 as cv
 
 class AlignedDataset(BaseDataset):
     def initialize(self, opt):
@@ -221,38 +223,38 @@ class AlignedDataset(BaseDataset):
         return 'AlignedDataset'
 
 
+#Get the mask of an cloth item
+
+def get_item_mask(img):
+  img = cv.cvtColor(img, cv.COLOR_RGB2LAB)
+  mask = img[:,:,0]
+  ret,img_th = cv.threshold(mask,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
+  # Copy the thresholded image.
+  img_floodfill = img_th.copy()
+
+  # Mask used to flood filling.
+  # Notice the size needs to be 2 pixels than the image.
+  h, w = img_floodfill.shape[:2]
+  mask = np.zeros((h+2, w+2), np.uint8)
+  # Floodfill from point (0, 0)
+  cv.floodFill(img_floodfill, mask, (0,0), 255);
+  # Invert floodfilled image
+  img_floodfill_inv = cv.bitwise_not(img_floodfill)
+  # Combine the two images to get the foreground.
+  img_out = img_th | img_floodfill_inv
+  return img_out
+
+
 class my_Dataset(data.Dataset):
-    def __init__(self, opt, person_path, cloth_path):
+    def __init__(self, opt, name, person_path, cloth_path, pose_path, parser_path = None, cloth_mask_path = None, from_user = True):
         super(my_Dataset, self).__init__()
         self.opt = opt
         self.person_path = person_path
         self.cloth_path = cloth_path
-        self.parser_path = person_path.replace('.jpg', '.png').replace('person', 'person_parser')
-        self.pose_path = person_path.replace('.jpg', '_keypoints.json').replace('person', 'person_pose')
-        self.cloth_mask_path = cloth_path.replace('cloth', 'cloth_mask')
-
-
-    #
-    # train_mask = 9600
-    # ### input A (label maps)
-    # box = []
-    # # for k,x in enumerate(self.A_paths):
-    # #     if '000386' in x :
-    # #         index=k
-    # #         break
-    # test = np.random.randint(len(self.A_paths))
-    # # for k, s in enumerate(self.B_paths):
-    # #    if '006581' in s:
-    # #        sample = k
-    # #        break
-    # A_path = self.A_paths[index]
-    # AR_path = self.AR_paths[index]
-
-
-
-    # A = Image.open(A_path).convert('L')
-    # AR = Image.open(AR_path).convert('L')
-
+        self.parser_path = parser_path
+        self.pose_path = pose_path
+        self.cloth_mask_path = cloth_mask_path
+        self.from_user = from_user
 
 
     def __getitem__(self, index):
@@ -263,7 +265,11 @@ class my_Dataset(data.Dataset):
         cloth_mask_path  = self.cloth_mask_path
         opt = self.opt
 
-        parser = Image.open(parser_path).convert('L')
+        if self.from_user:
+            parser = get_parser(person_img, name).convert('L')
+        else:
+            parser = Image.open(parser_path).convert('L')
+#        parser = Image.open(parser_path).convert('L')
         params = get_params(opt, parser.size)
         if opt.label_nc == 0:
             transform_A = get_transform(opt, params)
@@ -272,41 +278,28 @@ class my_Dataset(data.Dataset):
             transform_A = get_transform(opt, params, method=Image.NEAREST, normalize=False)
             parser_tensor = transform_A(parser) * 255.0
 
-        # B_tensor = inst_tensor = feat_tensor = 0
-        ### input B (real images)
 
         person = Image.open(person_path).convert('RGB')
         transform_B = get_transform(opt, params)
         person_tensor = transform_B(person)
 
-        # ### input M (masks)
-        # M_path = B_path  # self.M_paths[np.random.randint(1)]
-        # MR_path = B_path  # self.MR_paths[np.random.randint(1)]
-        # M = Image.open(M_path).convert('L')
-        # MR = Image.open(MR_path).convert('L')
-        # M_tensor = transform_A(MR)
-
-        # ### input_MC (colorMasks)
-        # MC_path = B_path  # self.MC_paths[1]
-        # MCR_path = B_path  # self.MCR_paths[1]
-        # MCR = Image.open(MCR_path).convert('L')
-        # MC_tensor = transform_A(MCR)
-
-        ### input_C (color)
-        # print(self.C_paths)
         cloth = Image.open(cloth_path).convert('RGB')
         cloth_tensor = transform_B(cloth)
 
-        ##Edge
-        # E_path = self.E_paths[test]
-        # print(E_path)
-        cloth_mask = Image.open(cloth_mask_path).convert('L')
+        if self.from_user:
+            cloth_mask = get_item_mask(cv.imread(cloth_path))
+            cloth_mask = Image.fromarray(cloth_mask).convert('L')
+        else:
+            cloth_mask = Image.open(cloth_mask_path).convert('L')
         cloth_mask_tensor = transform_A(cloth_mask)
 
         ##Pose
         with open(osp.join(pose_path), 'r') as f:
             pose_label = json.load(f)
-            pose_data = pose_label['people'][0]['pose_keypoints']
+            if self.from_user:
+                pose_data = pose_label['people'][0]['pose_keypoints_2d']
+            else:
+                pose_data = pose_label['people'][0]['pose_keypoints']
             pose_data = np.array(pose_data)
             pose_data = pose_data.reshape((-1, 3))
 

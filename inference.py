@@ -1,6 +1,8 @@
 import sys
 sys.path.append("./models/SingleHumanParser")
 sys.path.append("/usr/local/python")
+sys.path.append("/home/ubuntu/Insight_Project/openpose/python")
+import shutil
 import time
 from collections import OrderedDict
 from options.test_options import TestOptions
@@ -8,7 +10,7 @@ from dataset.data_loader import CreateDataLoader
 from dataset.aligned_dataset import my_Dataset
 from models.models import create_model
 import util.util as util
-from PIL import Image
+from PIL import Image, ImageDraw
 import os
 import numpy as np
 import torch
@@ -17,10 +19,10 @@ from torch.autograd import Variable
 import cv2
 from dataset.base_dataset import get_params, get_transform, normalize
 from random import randint
-print(os.listdir())
 from models.SingleHumanParser.inference1 import get_parser
 import cv2 as cv
-from openpose import pyopenpose as op
+import json
+#from openpose import pyopenpose as op
 
 #writer = SummaryWriter('runs/G1G2')
 
@@ -108,8 +110,14 @@ def get_item_mask(img):
   return img_out
 
 
-def try_on_database(opt, model, person_path, cloth_path):
-    dataset = my_Dataset(opt, person_path, cloth_path)
+def try_on(opt, name, model, person_path, cloth_path, pose_path, from_user):
+    if not from_user:
+        print(from_user)
+        parser_path = person_path.replace('.jpg', '.png').replace('person', 'person_parser')
+        cloth_mask_path = cloth_path.replace('cloth', 'cloth_mask')
+        dataset = my_Dataset(opt, name, person_path, cloth_path, pose_path, parser_path, cloth_mask_path, from_user)
+    else:
+        dataset = my_Dataset(opt, name, person_path, cloth_path, pose_path)
     data_loader = torch.utils.data.DataLoader(
             dataset,
             batch_size=1,
@@ -157,9 +165,9 @@ def try_on_database(opt, model, person_path, cloth_path):
     return bgr
 
 
-def try_on_input(opt, model, person_path, cloth_path, name):
+def try_on_input(opt, model, person_path, cloth_path, pose_path, name):
 
-
+    shutil.copyfile(person_path, '../openpose/examples/AppIn/1.jpg')
     #preparing dataset
     person_img = Image.open(person_path)
     cloth_img = Image.open(cloth_path)
@@ -184,9 +192,14 @@ def try_on_input(opt, model, person_path, cloth_path, name):
     cloth_mask_tensor = transform_A(cloth_mask)
 
     ##Pose
-    with open(osp.join(pose_path), 'r') as f:
+    
+    #os.chdir("../openpose")
+    #os.system("./build/examples/openpose/openpose.bin --image_dir examples/AppIn --write_json examples/AppOut/ --display 0 --render_pose 0 ")
+    #os.chdir("../Virtural_TryOn")
+
+    with open(os.path.join(pose_path), 'r') as f:
         pose_label = json.load(f)
-        pose_data = pose_label['people'][0]['pose_keypoints']
+        pose_data = pose_label['people'][0]['pose_keypoints_2d']
         pose_data = np.array(pose_data)
         pose_data = pose_data.reshape((-1, 3))
 
@@ -210,24 +223,24 @@ def try_on_input(opt, model, person_path, cloth_path, name):
         pose_map[i] = one_map[0]
     pose_tensor = pose_map
 
-    name = person_path.split('/')[-1]
-    input_dict = {'parser': parser_tensor, 'label_ref': parser_tensor, 'person': person_tensor,
-                  'cloth_mask': cloth_mask_tensor,
-                  'cloth': cloth_tensor, 'image_ref': person_tensor, 'path': parser_path, 'path_ref': parser_path,
-                  'pose': pose_tensor, 'name': name}
+  #  name = person_path.split('/')[-1]
+  #  input_dict = {'parser': parser_tensor, 'label_ref': parser_tensor, 'person': person_tensor,
+  #                'cloth_mask': cloth_mask_tensor,
+  #                'cloth': cloth_tensor, 'image_ref': person_tensor, 'path': parser_path, 'path_ref': parser_path,
+  #                'pose': pose_tensor, 'name': name}
 
 
-
-    dataset = my_Dataset(opt, person_path, cloth_path)
-    data_loader = torch.utils.data.DataLoader(
-            dataset,
-            batch_size=1,
-            shuffle=not opt.serial_batches,
-            num_workers=int(opt.nThreads))
-    for i, d in enumerate(data_loader):
-        data = d
-        break
-
+    data = {'parser':parser_tensor, 'person':person_tensor, 'cloth_mask':cloth_mask_tensor, 'cloth':cloth_tensor, 'pose':pose_tensor}
+ #   dataset = my_Dataset(opt, person_path, cloth_path)
+ #   data_loader = torch.utils.data.DataLoader(
+ #           dataset,
+ #           batch_size=1,
+ #           shuffle=not opt.serial_batches,
+ #           num_workers=int(opt.nThreads))
+ #   for i, d in enumerate(data_loader):
+ #       data = d
+ #       break
+    
     mask_clothes = torch.FloatTensor((data['parser'].cpu().numpy() == 4).astype(np.int))
     mask_fore = torch.FloatTensor((data['parser'].cpu().numpy() > 0).astype(np.int))
     img_fore = data['person'] * mask_fore
@@ -270,12 +283,6 @@ def try_on_input(opt, model, person_path, cloth_path, name):
 
 
 
-opt = TestOptions().parse()
-# model = create_model(opt)
-person_path = './data/valid/valid_img/000001_0.jpg'
-name = '000001_0.jpg'
-cloth_path = './data/valid/valid_color/000001_1.jpg'
-model = None
 
 
 #Set parameters for openpose
@@ -314,6 +321,24 @@ def get_pose(person_path):
     print("Body keypoints: \n" + str(datum.poseKeypoints))
 
 
-get_pose(person_path)
-
+#get_pose(person_path)
+#shutil.copyfile(person_path, '../openpose/AppIn/1.jpg')
+#os.chdir("../openpose")
+#os.system("./build/examples/openpose/openpose.bin --image_dir AppIn --write_json AppOut/ --display 0 --render_pose 0 ")
+#os.chdir("../Virtural_TryOn")
 #bgr = try_on_input(opt, model, person_path, cloth_path, name)
+
+if __name__ == "__main__":
+
+    person_path = './data/valid/valid_img/000001_0.jpg'
+    name = '000001_0.jpg'
+    cloth_path = './data/valid/valid_color/000001_1.jpg'
+
+    opt = TestOptions().parse()
+    model = create_model(opt)
+#    model = None
+    pose_path = "../openpose/examples/AppOut/1_keypoints.json"
+    bgr = try_on_input(opt, model, person_path, cloth_path, pose_path, name)
+
+
+    

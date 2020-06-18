@@ -2,17 +2,15 @@ import sys
 # insert at 1, 0 is the script path (or '' in REPL)
 #sys.path.append('~/322GDrive/Insight_Project/My_Project/Virtual_TryOn')
 #sys.path.append('~/Insight_Project/Virtual_TryOn')
-from MyWebApp.static.scripts.utils import random_person, random_cloth
-=======
 #sys.path.append('~/322GDrive/Insight_Project/My_Project/Virtural_TryOn')
 sys.path.append('/home/ubuntu/Insight_Project/Virtural_TryOn')
-from application.flaskexample.static.scripts.utils import random_person, random_cloth
+from flaskexample.static.scripts.utils import random_person, random_cloth
 
 from flask import render_template, request, send_from_directory
 import os
 from flaskexample import app
 
-from inference import build_model, try_on_database
+from inference import build_model, try_on
 import time
 from collections import OrderedDict
 from options.test_options import TestOptions
@@ -28,13 +26,14 @@ import cv2
 config = {'database': 'flaskexample/static/database',
           'person_url': "flaskexample/static/database/person/000001_0.jpg",
 	  #'person_folder':'/home/ubuntu/Insight_Project/Virtural_TryOn/application/flaskexample/static/database/person',
-          	  'person_folder':'application/flaskexample/static/database/person',
-	  'cloth_folder':'application/flaskexample/static/database/cloth',
-	  'result_folder':'application/flaskexample/static/database/result',
+          	  'person_folder':'./application/flaskexample/static/database/person',
+	  'cloth_folder':'./application/flaskexample/static/database/cloth',
+	  'result_folder':'./application/flaskexample/static/database/result',
 	  'title':"Virtual TryOn - by Qingyun Wang",
 	  'person_name':"",
 	  'cloth_name':"",
-	  'result_name':""
+	  'result_name':"",
+          'from_user': False
          }
 
 opt = TestOptions().parse()
@@ -154,7 +153,9 @@ def get_result():
 	if request.method == 'GET':
 		person_path = os.path.join(config['person_folder'], config['person_name'])
 		cloth_path = os.path.join(config['cloth_folder'], config['cloth_name'])
-		result = try_on_database(opt, model, person_path, cloth_path)
+		if not config['from_user']:
+                        pose_path = person_path.replace('.jpg', '_keypoints.json').replace('person', 'person_pose')
+                        result = try_on(opt, config['person_name'], model, person_path, cloth_path, pose_path, config['from_user'])
 		result_name = config['person_name'].replace('.jpg', '+') + config['cloth_name']
 		config['result_name'] = result_name
 
