@@ -100,7 +100,7 @@ def index():
 	# Pick a random person
 	config['person_name'] = random_person(config)
 	config['cloth_name'] = random_cloth(config)
-	config['result_name'] = os.path.join("../static/database/person", config['person_name'])
+	config['result_name'] = 'blank.jpg'
 
 	print("person_name", config['person_name'])
 	print("cloth_name", config['cloth_name'])
@@ -129,6 +129,26 @@ def get_person():
 							   username='chooch')
 
 
+
+
+@app.route('/cloth_upload', methods = ['POST', 'GET'])
+def upload_cloth():
+        pass
+        if request.method == 'POST':
+
+		# #Pick a random person
+                file = request.files['cloth']
+                if file:
+                        file.save()
+                        
+                return render_template('index.html',
+							   person_name = config['person_name'],
+							   cloth_name = config['cloth_name'],
+							   result_name=config['result_name'],
+							   title=config['title'],
+							   username='chooch')
+
+
 @app.route('/random_cloth', methods=['POST', 'GET'])
 def get_cloth():
 	if request.method == 'POST':
@@ -148,6 +168,11 @@ def get_cloth():
 							   title=config['title'],
 							   username='chooch')
 
+
+
+
+
+        
 @app.route('/output', methods=['POST', 'GET'])
 def get_result():
 	if request.method == 'GET':
