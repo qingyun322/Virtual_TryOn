@@ -1,4 +1,6 @@
 import sys
+import shutil
+import time
 # insert at 1, 0 is the script path (or '' in REPL)
 #sys.path.append('~/322GDrive/Insight_Project/My_Project/Virtual_TryOn')
 #sys.path.append('~/Insight_Project/Virtual_TryOn')
@@ -6,7 +8,9 @@ import sys
 sys.path.append('/home/ubuntu/Insight_Project/Virtural_TryOn')
 from flaskexample.static.scripts.utils import random_person, random_cloth
 
-from flask import render_template, request, send_from_directory
+from flask import render_template, request, send_from_directory, redirect, url_for, flash
+from werkzeug.utils import secure_filename
+
 import os
 from flaskexample import app
 
@@ -21,6 +25,13 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 import cv2
+from PIL import Image
+
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 config = {'database': 'flaskexample/static/database',
@@ -33,65 +44,14 @@ config = {'database': 'flaskexample/static/database',
 	  'person_name':"",
 	  'cloth_name':"",
 	  'result_name':"",
-          'from_user': False
+          'from_user': False,
+          'person_index': 0,
+          'cloth_index': 0
          }
 
 opt = TestOptions().parse()
 opt.checkpoints_dir = './checkpoints'
 model = create_model(opt)
-
-# config['person_name'] = random_person(config)
-# config['cloth_name'] = random_cloth(config)
-# person_path = os.path.join('../MyWebApp', config['database'], 'person', config['person_name'])
-# cloth_path = os.path.join('../MyWebApp', config['database'], 'cloth', config['cloth_name'])
-# result = try_on_database(opt, model, person_path, cloth_path)
-
-# data preprocessing
-# def changearm(old_label):
-# 	label = old_label
-# 	arm1 = torch.FloatTensor((data['label'].cpu().numpy() == 11).astype(np.int))
-# 	arm2 = torch.FloatTensor((data['label'].cpu().numpy() == 13).astype(np.int))
-# 	noise = torch.FloatTensor((data['label'].cpu().numpy() == 7).astype(np.int))
-# 	label = label * (1 - arm1) + arm1 * 4
-# 	label = label * (1 - arm2) + arm2 * 4
-# 	label = label * (1 - noise) + noise * 4
-# 	return label
-
-# def data_preprocessing(person_name, cloth_name, config):
-# 	data['image'] =
-# 	mask_clothes = torch.FloatTensor((data['label'].cpu().numpy() == 4).astype(np.int))
-# 	mask_fore = torch.FloatTensor((data['label'].cpu().numpy() > 0).astype(np.int))
-# 	img_fore = data['image'] * mask_fore
-# 	img_fore_wc = img_fore * mask_fore
-# 	all_clothes_label = changearm(data['label'])
-# 	data ={}
-
-
-
-
-
-
-
-
-
-
-
-
-# Create the application object
-#app = Flask(__name__)
-
-# # load index and model
-# input_dataset = ImageDataset('notebooks/data')
-# bs = 100
-# image_loader = torch.utils.data.DataLoader(input_dataset, batch_size=bs)
-# model, model_full = load_pretrained_model()
-#
-# pd_files = input_dataset.get_file_df()
-# annoy_path = 'notebooks/annoy_idx.annoy'
-# if os.path.exists(annoy_path):
-# 	annoy_idx_loaded = AnnoyIndex(512, metric='angular')
-# 	annoy_idx_loaded.load(annoy_path)
-
 
 @app.route('/')
 @app.route('/index')
@@ -101,7 +61,6 @@ def index():
 	config['person_name'] = random_person(config)
 	config['cloth_name'] = random_cloth(config)
 	config['result_name'] = 'blank.jpg'
-
 	print("person_name", config['person_name'])
 	print("cloth_name", config['cloth_name'])
 	# person_url = os.path.join(person_folder, person_names[idx])
@@ -114,13 +73,53 @@ def index():
 						   username = 'chooch')
 
 
+
+@app.route('/person_upload', methods=['POST', 'GET'])
+def upload_person():
+	if request.method == 'POST':
+		if 'person_name' not in request.files:
+			flash('No file part')
+			return redirect(request.url)
+		file = request.files['person_name']
+		# if user does not select file, browser also
+		# submit a empty part without filename
+		if file.filename == '':
+			flash('No selected file')
+			return redirect(request.url)
+		if file and allowed_file(file.filename):
+                        config['from_user'] = True
+                        config['person_name'] = str(config['person_index']) + '_user_person.jpg'
+                        filename = secure_filename(file.filename)
+                        person_url = os.path.join(config['person_folder'], config['person_name'])
+                        file.save(person_url)
+                        time.sleep(1)
+                        person = Image.open(person_url).convert('RGB')
+                        person.resize((192, 256))
+                        person.save(person_url)
+                        print(config)
+                        config['person_index'] += 1
+                        if config['person_index'] == 10:
+                                config['person_index'] = 0
+                        shutil.copyfile(person_url, os.path.join('../openpose/examples/AppIn', config['person_name']))
+		return render_template('index.html',
+							   person_name=config['person_name'],
+							   cloth_name=config['cloth_name'],
+							   result_name=config['result_name'],
+							   title=config['title'],
+							   username='chooch')
+
+
+
+
+
+
 @app.route('/random_person', methods = ['POST', 'GET'])
 def get_person():
 	if request.method == 'POST':
 
 		# #Pick a random person
 		config['person_name'] = random_person(config)
-		print(config['person_name'])
+		config['from_user'] = False
 		return render_template('index.html',
 							   person_name = config['person_name'],
 							   cloth_name = config['cloth_name'],
@@ -129,24 +128,39 @@ def get_person():
 							   username='chooch')
 
 
-
-
 @app.route('/cloth_upload', methods = ['POST', 'GET'])
 def upload_cloth():
-        pass
-        if request.method == 'POST':
-
-		# #Pick a random person
-                file = request.files['cloth']
-                if file:
-                        file.save()
-                        
-                return render_template('index.html',
-							   person_name = config['person_name'],
-							   cloth_name = config['cloth_name'],
+	if request.method == 'POST':
+		print(request.files)
+		if 'shirt_name' not in request.files:
+			flash('No file part')
+			return redirect(request.url)
+		file = request.files['shirt_name']
+		# if user does not select file, browser also
+		# submit a empty part without filename
+		if file.filename == '':
+			flash('No selected file')
+			return redirect(request.url)
+		if file and allowed_file(file.filename):
+                        config['from_user'] = True
+                        config['cloth_name'] = str(config['cloth_index']) + '_user_cloth.jpg'
+                        filename = secure_filename(file.filename)
+                        cloth_url = os.path.join(config['cloth_folder'], config['cloth_name'])
+                        file.save(cloth_url)
+                        time.sleep(1)
+                        cloth = Image.open(cloth_url).convert('RGB')
+                        cloth.resize((192, 256))
+                        cloth.save(cloth_url)
+                        config['cloth_index'] += 1
+                        if config['cloth_index'] == 10:
+                            config['cloth_index'] = 0
+		return render_template('index.html',
+							   person_name=config['person_name'],
+							   cloth_name=config['cloth_name'],
 							   result_name=config['result_name'],
 							   title=config['title'],
 							   username='chooch')
+
 
 
 @app.route('/random_cloth', methods=['POST', 'GET'])
@@ -180,6 +194,13 @@ def get_result():
 		cloth_path = os.path.join(config['cloth_folder'], config['cloth_name'])
 		if not config['from_user']:
                         pose_path = person_path.replace('.jpg', '_keypoints.json').replace('person', 'person_pose')
+                        result = try_on(opt, config['person_name'], model, person_path, cloth_path, pose_path, config['from_user'])
+		else:
+                        print(config['person_name'])
+                        os.chdir("../openpose")
+                        os.system("./build/examples/openpose/openpose.bin --image_dir examples/AppIn --write_json examples/AppOut/ -model_pose='COCO' --display 0 --render_pose 0 ")
+                        os.chdir("../Virtural_TryOn")
+                        pose_path = os.path.join('../openpose/examples/AppOut/', config['person_name'].replace('.jpg', '_keypoints.json'))
                         result = try_on(opt, config['person_name'], model, person_path, cloth_path, pose_path, config['from_user'])
 		result_name = config['person_name'].replace('.jpg', '+') + config['cloth_name']
 		config['result_name'] = result_name

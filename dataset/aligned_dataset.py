@@ -255,6 +255,7 @@ class my_Dataset(data.Dataset):
         self.pose_path = pose_path
         self.cloth_mask_path = cloth_mask_path
         self.from_user = from_user
+        self.name = name
 
 
     def __getitem__(self, index):
@@ -265,12 +266,14 @@ class my_Dataset(data.Dataset):
         cloth_mask_path  = self.cloth_mask_path
         opt = self.opt
 
-        if self.from_user:
-            parser = get_parser(person_img, name).convert('L')
-        else:
-            parser = Image.open(parser_path).convert('L')
-#        parser = Image.open(parser_path).convert('L')
-        params = get_params(opt, parser.size)
+        person = Image.open(person_path).convert('RGB')
+        params = get_params(opt, person.size)
+        transform_B = get_transform(opt, params)
+        person_tensor = transform_B(person)
+        
+        parser = Image.open(parser_path).convert('L')
+
+        
         if opt.label_nc == 0:
             transform_A = get_transform(opt, params)
             parser_tensor = transform_A(parser.convert('RGB'))
@@ -278,10 +281,6 @@ class my_Dataset(data.Dataset):
             transform_A = get_transform(opt, params, method=Image.NEAREST, normalize=False)
             parser_tensor = transform_A(parser) * 255.0
 
-
-        person = Image.open(person_path).convert('RGB')
-        transform_B = get_transform(opt, params)
-        person_tensor = transform_B(person)
 
         cloth = Image.open(cloth_path).convert('RGB')
         cloth_tensor = transform_B(cloth)

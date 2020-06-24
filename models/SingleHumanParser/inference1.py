@@ -12,6 +12,7 @@ from PIL import Image
 import matplotlib
 import matplotlib.pyplot as plt
 import torch
+
 import torch.nn as nn
 from torchvision import transforms
 
@@ -51,8 +52,8 @@ def build_network(snapshot, backend):
         _, epoch = os.path.basename(snapshot).split('_')
         if not epoch == 'last':
             epoch = int(epoch)
-        net.load_state_dict(torch.load(snapshot, map_location=torch.device('cpu')))
-        #net.load_state_dict(torch.load(snapshot))
+        #net.load_state_dict(torch.load(snapshot, map_location=torch.device('cpu')))
+        net.load_state_dict(torch.load(snapshot))
         logging.info("Snapshot for epoch {} loaded from {}".format(epoch, snapshot))
     if torch.cuda.is_available():
         net = net.cuda()
@@ -61,7 +62,7 @@ def build_network(snapshot, backend):
 
 def get_transform():
     transform_image_list = [
-        #transforms.Resize((256, 256), 3),
+        #transforms.Resize((192, 256), 3),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
     ]
@@ -170,6 +171,8 @@ def main():
     # ------------ load image ------------ #
     data_transform = get_transform()
     img = Image.open(image_path)
+
+    
     #img = Image.open(open(args.image_path, 'rb'))
     img = data_transform(img)
     if torch.cuda.is_available():
@@ -191,7 +194,7 @@ def main():
         show_image(img, pred, '0_')
         show_image(img, pred_change, '1_')
 
-def get_parser(img, name):
+def get_parser(person_path, parser_path):
     # --------------- load model --------------- #
     snapshot = os.path.join(args.models_path, args.backend, 'PSPNet_last')
     net, starting_epoch = build_network(snapshot, args.backend)
@@ -199,6 +202,7 @@ def get_parser(img, name):
 
     # ------------ load image ------------ #
     data_transform = get_transform()
+    img = Image.open(person_path)
     img = data_transform(img)
     if torch.cuda.is_available():
         img = img.cuda()
@@ -214,7 +218,8 @@ def get_parser(img, name):
         vfunc = np.vectorize(class_change)
         pred_change = vfunc(pred)
         # status = cv.imwrite('/content/gdrive/My Drive/Insight_Project/DeepFashion_Try_On/Data_preprocessing/test_label/0000_0.png',pred_change)
-        status = cv.imwrite('./sample/0000_1.png',pred_change)
+        status = cv.imwrite(parser_path, pred_change)
+        return parser_path
         #
         # colormap = [(0, 0, 0),
         #             (1, 0.25, 0), (0, 0.25, 0), (0.5, 0, 0.25), (1, 1, 1),
@@ -233,7 +238,7 @@ def get_parser(img, name):
         # plt.imshow(pred_change, cmap=cmap, norm=norm)
         # plt.savefig(fname="./" + name)
         # print('result saved to ...')
-    return Image.open('./sample/0000_1.png')
+    #return Image.open('./sample/0000_1.png')
 
 
 if __name__ == '__main__':

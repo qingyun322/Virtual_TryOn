@@ -224,17 +224,20 @@
             <div class="container d-flex h-100 align-items-center">
                 <div class="mx-auto text-center">
                     <h1 class="text-uppercase">V-Try</h1>
-                        <br><h2 class="text-white mx-auto mt-2 mb-5">Bring Home your own fitting room</h2>
+                        <br><h2 class="text-white mx-auto mt-2 mb-5">Bring home your own fitting room</h2>
+   
+                
 
 
          <div class="row">
            <div class="column">
-	     <form action = "/input_person" method = "POST">
-               <button type="submit", formaction = '/input_person'>Upload a Person</button>
+	     <form action = "/person_upload" method = "POST" enctype="multipart/form-data" id="person_upload" name="person_upload">
+               <h4 class="text-white mx-auto mt-2 mb-5">Person</h4>
+               <input type="file" name="person_name" id="person" onchange="form.submit()" />
 	     </form>
+	     <img src="../static/database/person/{{person_name}}" alt="person" style="width:100%">
               <form action = "/random_person" method = "POST">
                 <div class="container">
-                      <img src="../static/database/person/{{person_name}}" alt="person" style="width:100%">
                       <button type="submit", formaction = '/random_person'>Random Person</button>
                   </div>
               </form>
@@ -243,38 +246,34 @@
           <div class="column">
 	    <div class="container">
 	      
-              <form action = "/input_cloth" method = "POST">
-                      <button type="submit", formaction = '/input_cloth'>Upload a Shirt</button>
-              </form>
-              <form action = "/random_cloth" method = "POST">
+	      <form action = "/cloth_upload" method = "POST" enctype="multipart/form-data" id="cloth_upload" name="cloth_upload">
+                <h4 class="text-white mx-auto mt-2 mb-5">Shirt</h4>
+                <input type="file" name="shirt_name" id="shirt" onchange="form.submit()" />
+	      </form>
+	      
+	      <form action = "/random_cloth" method = "POST">
                        <img src="../static/database/cloth/{{cloth_name}}" alt="cloth" style="width:100%">
                       <button type="submit", formaction = '/random_cloth'>Random Shirt</button>
               </form>
-	       </div>
+	    </div>
           </div>
           <div class="column">
-
-	    <div class="btn-group">
+	    <h4 class="text-white mx-auto mt-2 mb-5">Try On!</h4>
+	    
+	    <form action = "/output" method = "GET">
+		<div class="container">
+                  <button type="submit", formaction = '/output'>Try On!</button>
+		  </form>
+		<img src="../static/database/result/{{result_name}}" alt="output" style="width:100%">
+	   <div class="btn-group">
 	      <button>Like</button>
 	      <button>Dislike</button>
 	    </div>
-
-	    <form action = "/output" method = "GET">
-		<div class="container">
-                  <img src="../static/database/result/{{result_name}}" alt="output" style="width:100%">
-                  <button type="submit", formaction = '/output'>Try On!</button>
-              </div>
-          </div>
-        </div>
-                    <!--<br><h2 class="text-white mx-auto mt-2 mb-5">Or upload your own image!</h2>
-                    <form class="myform.cgi">
-                        <label for="upload"> Select an image file to upload</label>
-                        <br><input type="file" name="fileupload" value="fileupload" id="upload" alt="Upload" accept='image/png, image/jpeg, image/gif' width="100">
-                        <br> <input type="submit" value="Upload Image" id="upload" name="submit">
-                    </form>-->
-                </div>
             </div>
-        </header>
+	  </div>
+          </div>
+	</div>
+       </header>                 
 
         <!-- Contact-->
         <section class="contact-section bg-black" id="contact">

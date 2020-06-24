@@ -117,7 +117,9 @@ def try_on(opt, name, model, person_path, cloth_path, pose_path, from_user):
         cloth_mask_path = cloth_path.replace('cloth', 'cloth_mask')
         dataset = my_Dataset(opt, name, person_path, cloth_path, pose_path, parser_path, cloth_mask_path, from_user)
     else:
-        dataset = my_Dataset(opt, name, person_path, cloth_path, pose_path)
+        parser_path = person_path.replace('.jpg', '.png').replace('person', 'person_parser')
+        parser_path = get_parser(person_path, parser_path)
+        dataset = my_Dataset(opt, name, person_path, cloth_path, pose_path, parser_path)
     data_loader = torch.utils.data.DataLoader(
             dataset,
             batch_size=1,
@@ -165,82 +167,29 @@ def try_on(opt, name, model, person_path, cloth_path, pose_path, from_user):
     return bgr
 
 
-def try_on_input(opt, model, person_path, cloth_path, pose_path, name):
 
-    shutil.copyfile(person_path, '../openpose/examples/AppIn/1.jpg')
-    #preparing dataset
-    person_img = Image.open(person_path)
-    cloth_img = Image.open(cloth_path)
-    parser = get_parser(person_img, name).convert('L')
-    params = get_params(opt, parser.size)
-    if opt.label_nc == 0:
-        transform_A = get_transform(opt, params)
-        parser_tensor = transform_A(parser.convert('RGB'))
+
+
+
+def try_on_test(opt, name, model, person_path, cloth_path, pose_path, from_user):
+    if not from_user:
+        print(from_user)
+        parser_path = person_path.replace('.jpg', '.png').replace('person', 'person_parser')
+        cloth_mask_path = cloth_path.replace('cloth', 'cloth_mask')
+        dataset = my_Dataset(opt, name, person_path, cloth_path, pose_path, parser_path, cloth_mask_path, from_user)
     else:
-        transform_A = get_transform(opt, params, method=Image.NEAREST, normalize=False)
-        parser_tensor = transform_A(parser) * 255.0
+        parser_path = person_path.replace('.jpg', '.png').replace('person', 'person_parser')
+        parser_path = get_parser(person_path, parser_path)
+        dataset = my_Dataset(opt, name, person_path, cloth_path, pose_path, parser_path)
+    data_loader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=1,
+            shuffle=not opt.serial_batches,
+            num_workers=int(opt.nThreads))
+    for i, d in enumerate(data_loader):
+        data = d
+        break
 
-    person = person_img.convert('RGB')
-    transform_B = get_transform(opt, params)
-    person_tensor = transform_B(person)
-
-    cloth = cloth_img.convert('RGB')
-    cloth_tensor = transform_B(cloth)
-
-    cloth_mask = get_item_mask(cv.imread(cloth_path))
-    cloth_mask = Image.fromarray(cloth_mask).convert('L')
-    cloth_mask_tensor = transform_A(cloth_mask)
-
-    ##Pose
-    
-    #os.chdir("../openpose")
-    #os.system("./build/examples/openpose/openpose.bin --image_dir examples/AppIn --write_json examples/AppOut/ --display 0 --render_pose 0 ")
-    #os.chdir("../Virtural_TryOn")
-
-    with open(os.path.join(pose_path), 'r') as f:
-        pose_label = json.load(f)
-        pose_data = pose_label['people'][0]['pose_keypoints_2d']
-        pose_data = np.array(pose_data)
-        pose_data = pose_data.reshape((-1, 3))
-
-    fine_height = 256
-    fine_width = 192
-    r = 5
-
-    point_num = pose_data.shape[0]
-    pose_map = torch.zeros(point_num, fine_height, fine_width)
-    im_pose = Image.new('L', (fine_width, fine_height))
-    pose_draw = ImageDraw.Draw(im_pose)
-    for i in range(point_num):
-        one_map = Image.new('L', (fine_width, fine_height))
-        draw = ImageDraw.Draw(one_map)
-        pointx = pose_data[i, 0]
-        pointy = pose_data[i, 1]
-        if pointx > 1 and pointy > 1:
-            draw.rectangle((pointx - r, pointy - r, pointx + r, pointy + r), 'white', 'white')
-            pose_draw.rectangle((pointx - r, pointy - r, pointx + r, pointy + r), 'white', 'white')
-        one_map = transform_B(one_map.convert('RGB'))
-        pose_map[i] = one_map[0]
-    pose_tensor = pose_map
-
-  #  name = person_path.split('/')[-1]
-  #  input_dict = {'parser': parser_tensor, 'label_ref': parser_tensor, 'person': person_tensor,
-  #                'cloth_mask': cloth_mask_tensor,
-  #                'cloth': cloth_tensor, 'image_ref': person_tensor, 'path': parser_path, 'path_ref': parser_path,
-  #                'pose': pose_tensor, 'name': name}
-
-
-    data = {'parser':parser_tensor, 'person':person_tensor, 'cloth_mask':cloth_mask_tensor, 'cloth':cloth_tensor, 'pose':pose_tensor}
- #   dataset = my_Dataset(opt, person_path, cloth_path)
- #   data_loader = torch.utils.data.DataLoader(
- #           dataset,
- #           batch_size=1,
- #           shuffle=not opt.serial_batches,
- #           num_workers=int(opt.nThreads))
- #   for i, d in enumerate(data_loader):
- #       data = d
- #       break
-    
     mask_clothes = torch.FloatTensor((data['parser'].cpu().numpy() == 4).astype(np.int))
     mask_fore = torch.FloatTensor((data['parser'].cpu().numpy() > 0).astype(np.int))
     img_fore = data['person'] * mask_fore
@@ -267,15 +216,15 @@ def try_on_input(opt, model, person_path, cloth_path, pose_path, name):
     # ############## return as image ##########
 
     if torch.cuda.is_available():
-#        a = generate_label_color(generate_label_plain(input_label)).float().cuda()
-#        b = real_image.float().cuda()
+        a = generate_label_color(opt, generate_label_plain(input_label)).float().cuda()
+        b = real_image.float().cuda()
         c = fake_image.float().cuda()
+        d=torch.cat([clothes_mask,clothes_mask,clothes_mask],1)
+        combine = torch.cat([a[0],d[0],b[0],c[0],rgb[0]], 2).squeeze()
     else:
-#        a = generate_label_color(generate_label_plain(input_label)).float()
-#        b = real_image.float()
         c = fake_image.float()
 
-    img = (c[0].squeeze().permute(1, 2, 0).detach().cpu().numpy() + 1)/2
+    img = (combine.squeeze().permute(1, 2, 0).detach().cpu().numpy() + 1)/2
     rgb = (img * 255).astype(np.uint8)
     bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
     return bgr
@@ -285,40 +234,6 @@ def try_on_input(opt, model, person_path, cloth_path, pose_path, name):
 
 
 
-#Set parameters for openpose
-# Set
-def set_op_params():
-    params = dict()
-    params["logging_level"] = 3
-    params["output_resolution"] = "-1x-1"
-    params["net_resolution"] = "-1x368"
-    params["model_pose"] = "COCO"
-    params["alpha_pose"] = 0.6
-    params["scale_gap"] = 0.3
-    params["scale_number"] = 1
-    params["render_threshold"] = 0.05
-    params["image_dir"] = './data/valid/valid_img'
-    # If GPU version is built, and multiple GPUs are available, set the ID here
-    #params["num_gpu_start"] = 0
-    params["disable_blending"] = False
-    # Ensure you point to the correct path where models are located
-    params["write_json"] = "./"
-    params["model_folder"] = "/Users/qingyunw/OneDrive/Programming/Insight_Toronto_2020/Forked_Projects/OpenPose/models"
-    return params
-
-# get pose map using openpose
-def get_pose(person_path):
-    params = set_op_params()
-    opWrapper = op.WrapperPython()
-    opWrapper.configure(params)
-    opWrapper.start()
-
-    datum = op.Datum()
-    imageToProcess = cv2.imread(person_path)
-    datum.cvInputData = imageToProcess
-    opWrapper.emplaceAndPop([datum])
-
-    print("Body keypoints: \n" + str(datum.poseKeypoints))
 
 
 #get_pose(person_path)
@@ -332,13 +247,19 @@ if __name__ == "__main__":
 
     person_path = './data/valid/valid_img/000001_0.jpg'
     name = '000001_0.jpg'
-    cloth_path = './data/valid/valid_color/000001_1.jpg'
+    cloth_path = './data/valid/valid_color/000010_1.jpg'
 
     opt = TestOptions().parse()
     model = create_model(opt)
-#    model = None
+    person_img = Image.open(person_path)
+    parser_path = person_path.replace('.jpg', '.png').replace('person', 'person_parser')
+    parser_path = get_parser(person_path, parser_path)
+    
+    #model = None
     pose_path = "../openpose/examples/AppOut/1_keypoints.json"
-    bgr = try_on_input(opt, model, person_path, cloth_path, pose_path, name)
+    result = try_on_test(opt, name, model, person_path, cloth_path, pose_path, from_user = True)
+    cv2.imwrite('./sample/result.jpg', result)
+#    bgr = try_on_input(opt, model, person_path, cloth_path, pose_path, name)
 
 
     
